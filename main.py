@@ -8,10 +8,16 @@ load_dotenv()
 
 
 def main():
-    prompt = sys.argv[1]
-    if prompt is None:
+    if len(sys.argv) < 2:
         print("No prompt provided")
         sys.exit(1)
+
+    is_verbose = False
+
+    if len(sys.argv) == 3 and sys.argv[2] == "--verbose":
+        is_verbose = True
+
+    prompt = sys.argv[1]
 
     messages = [
         types.Content(role="user", parts=[types.Part(text=prompt)]),
@@ -31,8 +37,11 @@ def main():
         return
 
     print(response.text)
-    print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-    print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+
+    if is_verbose:
+        print(f"User prompt: {prompt}")
+        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
 
 
 main()
