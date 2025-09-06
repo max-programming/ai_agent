@@ -38,6 +38,8 @@ def main():
 
     prompt = sys.argv[1]
 
+    max_iters = 20
+
     api_key = os.environ.get("GEMINI_API_KEY")
     client = genai.Client(api_key=api_key)
 
@@ -54,33 +56,43 @@ def main():
         tools=[available_functions],
     )
 
-    messages = [
+    messages: list[types.Content] = [
         types.Content(role="user", parts=[types.Part(text=prompt)]),
     ]
-    response = client.models.generate_content(
-        model="gemini-2.0-flash-001",
-        contents=messages,
-        config=config,
-    )
 
-    if response is None or response.usage_metadata is None:
-        print("No response from the model")
-        return
+    for i in range(0, max_iters):
+        response = client.models.generate_content(
+            model="gemini-2.0-flash-001",
+            contents=messages,
+            config=config,
+        )
 
-    if is_verbose:
-        print(f"User prompt: {prompt}")
-        print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
-        print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+        if response is None or response.usage_metadata is None:
+            print("No response from the model")
+            return
 
-    if response.function_calls:
-        for function_call_part in response.function_calls:
-            function_call_result = call_function(function_call_part, is_verbose)
-            if function_call_result.parts[0].function_response is None:
-                raise Exception("Function call result is None")
-            else:
-                print(f"-> {function_call_result.parts[0].function_response.response}")
-    else:
-        print(response.text)
+        if is_verbose:
+            print(f"User prompt: {prompt}")
+            print(f"Prompt tokens: {response.usage_metadata.prompt_token_count}")
+            print(f"Response tokens: {response.usage_metadata.candidates_token_count}")
+
+        for candidate in response.candidates:
+            messages.append(candidate.content)
+
+        if response.function_calls:
+            for function_call_part in response.function_calls:
+                function_call_result = call_function(function_call_part, is_verbose)
+                messages.append(function_call_result)
+                # if function_call_result.parts[0].function_response is None:
+                #     raise Exception("Function call result is None")
+                # else:
+                #     print(
+                #         f"-> {function_call_result.parts[0].function_response.response}"
+                #     )
+
+        else:
+            print(response.text)
+            return
 
 
 main()
