@@ -4,6 +4,7 @@ from dotenv import load_dotenv
 from google import genai
 from google.genai import types
 
+from call_function import call_function
 from functions.get_file_content import schema_get_file_content
 from functions.get_files_info import schema_get_files_info
 from functions.run_python_file import schema_run_python_file
@@ -73,9 +74,11 @@ def main():
 
     if response.function_calls:
         for function_call_part in response.function_calls:
-            print(
-                f"Calling function: {function_call_part.name}({function_call_part.args})"
-            )
+            function_call_result = call_function(function_call_part, is_verbose)
+            if function_call_result.parts[0].function_response is None:
+                raise Exception("Function call result is None")
+            else:
+                print(f"-> {function_call_result.parts[0].function_response.response}")
     else:
         print(response.text)
 

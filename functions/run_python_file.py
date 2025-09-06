@@ -43,7 +43,7 @@ STDERR: {stderr}
 
 schema_run_python_file = types.FunctionDeclaration(
     name="run_python_file",
-    description="Runs a Python file, constrained to the working directory.",
+    description="Runs a Python file with optional arguments, constrained to the working directory.",
     parameters=types.Schema(
         type=types.Type.OBJECT,
         properties={
